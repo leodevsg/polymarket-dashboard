@@ -10,10 +10,10 @@
 <script>
 async function show(){
  try{
-  const r=await fetch(/pipeline/sample_output/arb_sim_top.csv);
+  const r=await fetch('/pipeline/sample_output/arb_sim_top.csv');
   const txt=await r.text();
-  document.getElementById(out).textContent = txt.slice(0,2000);
- }catch(e){document.getElementById(out).textContent = error:+e}
+  document.getElementById('out').textContent = txt.slice(0,2000);
+ }catch(e){document.getElementById('out').textContent = error:+e}
 }
 show();
 </script>
