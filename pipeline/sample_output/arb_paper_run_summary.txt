@@ -1,0 +1,23 @@
+Ringkasan Run Phase 1 (paper-arbitrage Polymarket) - Bahasa Indonesia
+
+Status: Tertunda - akses ke endpoint publik Polymarket tidak berhasil karena keterbatasan akses pencarian/web.
+
+Langkah yang dilakukan:
+- Menyiapkan file output kosong: pipeline/sample_output/arb_paper_run.csv (headers ditulis).
+- Mencoba menemukan endpoint publik Polymarket untuk mengambil daftar pasar, namun alat web_search memerlukan kunci API Brave Search yang belum dikonfigurasi di lingkungan ini, sehingga pencarian otomatis gagal.
+- Tanpa endpoint yang dapat diakses, saya tidak dapat melakukan pemindaian pasar nyata atau mensimulasikan 200 percobaan.
+
+Rekomendasi untuk melanjutkan:
+1. Berikan akses jaringan penuh atau sediakan cara untuk memanggil endpoint Polymarket (mis. URL API publik yang diketahui atau kunci/izin yang diperlukan).
+2. Alternatif: izinkan eksekusi perintah shell untuk menjalankan curl/HTTP POST ke GraphQL endpoint Polymarket dari lingkungan ini.
+3. Jika Anda ingin saya lanjutkan sekarang, berikan endpoint GraphQL atau contoh respons pasar, atau izinkan saya menggunakan kredensial web search (BRAVE_API_KEY) agar saya bisa menemukan endpoint secara otomatis.
+
+Output yang tersimpan:
+- pipeline/sample_output/arb_paper_run.csv (kosong, hanya header)
+- pipeline/sample_output/arb_paper_run_summary.txt (file ini)
+
+Catatan teknis singkat:
+- Diperlukan panggilan POST GraphQL untuk mengambil data pasar Polymarket secara efisien.
+- Simulasi akan menerapkan biaya 0.5% dan slippage 0.5%, 1%, 2% pada trade paths yang ditemukan, dan menjalankan 200 percobaan Monte Carlo atau batas waktu 48 jam.
+
+Jika setuju, beri saya akses yang diperlukan atau URL API dan saya akan lanjutkan.
