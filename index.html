@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Polymarket Arb Dashboard</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial;margin:20px}
+    h1{margin-bottom:6px}
+    .row{display:flex;gap:20px}
+    .card{border:1px solid #ddd;padding:12px;border-radius:6px;background:#fff;flex:1}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:6px;border-bottom:1px solid #eee;text-align:left}
+    .small{font-size:12px;color:#666}
+  </style>
+  <!-- CDN libs -->
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <h1>Polymarket Arb Dashboard</h1>
+  <p class="small">Dashboard lokal. File CSV di pipeline/sample_output/ harus ada dan dapat diakses dari browser (buka file://.../index.html di browser atau serve folder).</p>
+
+  <div class="row">
+    <div class="card" style="flex:1.2">
+      <h3>Top Arb Candidates</h3>
+      <div id="top-table">Loading...</div>
+    </div>
+    <div class="card" style="flex:0.8">
+      <h3>Quick Metrics</h3>
+      <div id="metrics">Loading...</div>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:18px">
+    <div class="card">
+      <h3>Simulation Distribution (Net)</h3>
+      <canvas id="histChart" height="120"></canvas>
+    </div>
+    <div class="card">
+      <h3>Recent Trades / Sim Detail</h3>
+      <div id="sim-table">Loading...</div>
+    </div>
+  </div>
+
+<script>
+const base = '../../pipeline/sample_output/';
+const paths = {
+  top: base + 'arb_sim_top.csv',
+  sim_detail: base + 'arb_paper_sim_detail.csv',
+  arb_results: base + 'arb_sim_results.csv'
+};
+
+function fetchCSV(path){
+  return new Promise((res,rej)=>{
+    Papa.parse(path, {download:true, header:true, skipEmptyLines:true, complete: (r)=>res(r.data), error: (e)=>rej(e)});
+  });
+}
+
+async function render(){
+  try{
+    const top = await fetchCSV(paths.top);
+    const sim = await fetchCSV(paths.sim_detail);
+    const results = await fetchCSV(paths.arb_results);
+
+    // Top table
+    const topDiv = document.getElementById('top-table');
+    if(!top || top.length==0){ topDiv.innerText='No top candidates file found.'; } else {
+      let html='<table><thead><tr><th>group</th><th>markets</th><th>sum_yes</th><th>n</th><th>net(0.5%)</th></tr></thead><tbody>';
+      top.slice(0,50).forEach(r=>{ html+=`<tr><td>${r.group}</td><td style="max-width:260px;white-space:nowrap;overflow:auto">${r.market_ids}</td><td>${r.sum_yes}</td><td>${r.n_markets}</td><td>${r.net_0.5pct}</td></tr>`});
+      html+='</tbody></table>';
+      topDiv.innerHTML=html;
+    }
+
+    // Metrics
+    const metrics = document.getElementById('metrics');
+    if(sim && sim.length>0){
+      const nets = sim.map(r=>parseFloat(r.net_0.5)).filter(v=>!isNaN(v));
+      const total = nets.reduce((a,b)=>a+b,0).toFixed(2);
+      const mean = (total / nets.length).toFixed(2);
+      metrics.innerHTML = `<p>Sim trials: <b>${nets.length}</b></p><p>Total net (0.5%): <b>$${total}</b></p><p>Mean per trial: <b>$${mean}</b></p>`;
+    } else {
+      metrics.innerText='No sim detail file found.';
+    }
+
+    // Histogram
+    const ctx = document.getElementById('histChart').getContext('2d');
+    const values = sim.map(r=>parseFloat(r.net_0.5)).filter(v=>!isNaN(v));
+    if(values.length>0){
+      // create bins
+      const bins=20; const min=Math.min(...values); const max=Math.max(...values); const step=(max-min)/bins; const hist=new Array(bins).fill(0);
+      values.forEach(v=>{ let i=Math.floor((v-min)/step); if(i<0)i=0; if(i>=bins) i=bins-1; hist[i]++; });
+      const labels=Array.from({length:bins},(_,i)=> (min + i*step).toFixed(1));
+      new Chart(ctx,{type:'bar',data:{labels, datasets:[{label:'Counts',data:hist,backgroundColor:'#36a2eb'}]}, options:{responsive:true}});
+    }
+
+    // sim table
+    const simDiv = document.getElementById('sim-table');
+    if(sim && sim.length>0){
+      let html='<table><thead><tr><th>trial</th><th>group</th><th>net_0.5</th><th>net_1</th><th>net_2</th></tr></thead><tbody>';
+      sim.slice(-100).reverse().forEach(r=>{ html+=`<tr><td>${r.trial}</td><td>${r.group}</td><td>${r.net_0.5}</td><td>${r.net_1}</td><td>${r.net_2}</td></tr>`});
+      html+='</tbody></table>';
+      simDiv.innerHTML=html;
+    } else simDiv.innerText='No sim details available.';
+
+  }catch(e){ console.error(e); document.body.insertAdjacentHTML('beforeend','<p style="color:red">Error loading CSVs: '+e+'</p>'); }
+}
+
+render();
+</script>
+</body>
+</html>
