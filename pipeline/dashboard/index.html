@@ -50,10 +50,32 @@ const paths = {
   arb_results: base + 'arb_sim_results.csv'
 };
 
-function fetchCSV(path){
-  return new Promise((res,rej)=>{
-    Papa.parse(path, {download:true, header:true, skipEmptyLines:true, complete: (r)=>res(r.data), error: (e)=>rej(e)});
-  });
+async function fetchCSV(path){
+  // simple fetch + CSV parse (fallback to avoid CORS/XHR issues on some mobile browsers)
+  try{
+    const r = await fetch(path);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const txt = await r.text();
+    const lines = txt.split(/?
+/).filter(Boolean);
+    if(lines.length===0) return [];
+    const headers = lines[0].split(',').map(h=>h.trim());
+    const out = [];
+    for(let i=1;i<lines.length;i++){
+      const cols = lines[i].split(',');
+      const obj = {};
+      for(let j=0;j<headers.length;j++) obj[headers[j]] = cols[j]===undefined? '': cols[j];
+      out.push(obj);
+    }
+    return out;
+  }catch(e){
+    // fallback to papa parse if available
+    return new Promise((res,rej)=>{
+      if(window.Papa){
+        Papa.parse(path, {download:true, header:true, skipEmptyLines:true, complete: (r)=>res(r.data), error: (err)=>rej(err)});
+      } else rej(e);
+    });
+  }
 }
 
 function safeText(v){ return v==null? '': String(v); }
