@@ -1,0 +1,20 @@
+<!doctype html>
+<html><body>
+<h2>Debug CSV fetch</h2>
+<ul>
+<li><a href="/pipeline/sample_output/arb_sim_top.csv">arb_sim_top.csv</a></li>
+<li><a href="/pipeline/sample_output/arb_paper_sim_detail.csv">arb_paper_sim_detail.csv</a></li>
+<li><a href="/pipeline/sample_output/arb_sim_results.csv">arb_sim_results.csv</a></li>
+</ul>
+<pre id="out">loading...</pre>
+<script>
+async function show(){
+ try{
+  const r=await fetch(/pipeline/sample_output/arb_sim_top.csv);
+  const txt=await r.text();
+  document.getElementById(out).textContent = txt.slice(0,2000);
+ }catch(e){document.getElementById(out).textContent = error:+e}
+}
+show();
+</script>
+</body></html>
